@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Booking</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+<h1>Edit Booking</h1>
+
+<form action="/update-booking" method="post">
+
+    <input type="hidden" name="booking_id" value="{{ booking_id }}">
+
+    <p><strong>Room:</strong> {{ room }}</p>
+
+    <label>Date</label><br>
+    <input type="date" name="date" value="{{ date }}" required>
+
+    <br><br>
+
+    <label>Time</label><br>
+    <input type="time" name="time" value="{{ time }}" required>
+
+    <br><br>
+
+    <button type="submit">Update Booking</button>
+</form>
+
+<br>
+
+<a href="/">⬅ Back to Home</a>
+
+</body>
+</html>

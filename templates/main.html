@@ -77,7 +77,6 @@
 <form method="get" action="/">
     <select name="filter_room">
         <option value="">All Rooms</option>
-
         {% for room in rooms %}
             <option value="{{ room.name }}"
                 {% if filter_room == room.name %}selected{% endif %}>
@@ -94,17 +93,22 @@
 <h2>Bookings</h2>
 
 <ul>
-    {% for b in bookings %}
-        <li>
-            {{ b.room }} | {{ b.date }} | {{ b.time }} | Booked by: {{ b.user }}
+{% for b in bookings %}
+    <li>
+        {{ b.room }} | {{ b.date }} | {{ b.time }} | Booked by: {{ b.user }}
 
-            <!-- DELETE BUTTON -->
-            <form action="/delete-booking" method="post" style="display:inline;">
-                <input type="hidden" name="booking_id" value="{{ b._id }}">
-                <button type="submit">Delete</button>
-            </form>
-        </li>
-    {% endfor %}+
+        <!-- DELETE -->
+        <form action="/delete-booking" method="post" style="display:inline;">
+            <input type="hidden" name="booking_id" value="{{ b._id }}">
+            <button type="submit">Delete</button>
+        </form>
+
+        <!-- EDIT -->
+        <a href="/edit-booking?booking_id={{ b._id }}">
+            <button type="button">Edit</button>
+        </a>
+    </li>
+{% endfor %}
 </ul>
 
 <script type="module" src="/static/firebase-login.js"></script>
