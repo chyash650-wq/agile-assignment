@@ -133,7 +133,7 @@ async def book_room(
     else:
         day_id = day_doc["_id"]
 
-    # 🔴 Prevent double booking
+    # 🔴 Prevent double booking 
     existing = bookings_collection.find_one({
         "day_id": day_id,
         "time": time
