@@ -1,30 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Room Scheduler</title>
+    <title>Dashboard</title>
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
 
-<h1>Room Scheduler Login</h1>
+<h1>Room Scheduler Dashboard</h1>
 
-<input id="email" placeholder="Email">
-<input id="password" type="password" placeholder="Password">
-
-<br><br>
-
-<button id="login">Login</button>
-<button id="signup">Sign Up</button>
+<p>Logged in as: {{ user.email }}</p>
 <button id="logout">Logout</button>
-
-{% if user %}
-    <p>Logged in as: {{ user.email }}</p>
-{% endif %}
 
 <hr>
 
 <h2>Add Room</h2>
-
 <form action="/add-room" method="post">
     <input type="text" name="name" placeholder="Room Name" required>
     <input type="number" name="capacity" placeholder="Capacity" required>
@@ -34,80 +23,61 @@
 <hr>
 
 <h2>Available Rooms</h2>
-
 <ul>
-    {% for room in rooms %}
-        <li>{{ room.name }} - Capacity: {{ room.capacity }}</li>
-    {% endfor %}
+{% for room in rooms %}
+    <li>
+        {{ room.name }} - Capacity: {{ room.capacity }}
+
+        <form action="/delete-room" method="post" style="display:inline;">
+            <input type="hidden" name="room_id" value="{{ room._id }}">
+            <button type="submit">Delete</button>
+        </form>
+    </li>
+{% endfor %}
 </ul>
 
 <hr>
 
 <h2>Book Room</h2>
-
 <form action="/book-room" method="post">
-
-    <label>Room</label><br>
-    <select name="room" required>
-        <option value="">Select Room</option>
+    <select name="room">
         {% for room in rooms %}
-            <option value="{{ room.name }}">{{ room.name }}</option>
+        <option value="{{ room.name }}">{{ room.name }}</option>
         {% endfor %}
     </select>
 
-    <br><br>
-
-    <label>Date</label><br>
     <input type="date" name="date" required>
-
-    <br><br>
-
-    <label>Time</label><br>
     <input type="time" name="time" required>
-
-    <br><br>
 
     <button type="submit">Book</button>
 </form>
 
 <hr>
 
-<h2>Filter by Room</h2>
-
-<form method="get" action="/">
+<h2>Filter</h2>
+<form method="get" action="/dashboard">
     <select name="filter_room">
-        <option value="">All Rooms</option>
+        <option value="">All</option>
         {% for room in rooms %}
-            <option value="{{ room.name }}"
-                {% if filter_room == room.name %}selected{% endif %}>
-                {{ room.name }}
-            </option>
+        <option value="{{ room.name }}">{{ room.name }}</option>
         {% endfor %}
     </select>
-
     <button type="submit">Filter</button>
 </form>
 
 <hr>
 
 <h2>Bookings</h2>
-
 <ul>
 {% for b in bookings %}
-    <li>
-        {{ b.room }} | {{ b.date }} | {{ b.time }} | Booked by: {{ b.user }}
+<li>
+    {{ b.room }} | {{ b.date }} | {{ b.time }}
 
-        <!-- DELETE -->
-        <form action="/delete-booking" method="post" style="display:inline;">
-            <input type="hidden" name="booking_id" value="{{ b._id }}">
-            <button type="submit">Delete</button>
-        </form>
-
-        <!-- EDIT -->
-        <a href="/edit-booking?booking_id={{ b._id }}">
-            <button type="button">Edit</button>
-        </a>
-    </li>
+    <form action="/delete-booking" method="post" style="display:inline;">
+        <input type="hidden" name="booking_id" value="{{ b._id }}">
+        <button type="submit">Delete</button>
+    </form>
+</li>
 {% endfor %}
 </ul>
 

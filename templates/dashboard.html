@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+<div class="container">
+
+    <h1>Room Scheduler Dashboard</h1>
+    <p>Logged in as: {{ user.email }}</p>
+
+    <!-- ADD ROOM -->
+    <div class="card">
+        <h2>Add Room</h2>
+
+        <form action="/add-room" method="post">
+            <input type="text" name="name" placeholder="Room Name" required>
+            <input type="number" name="capacity" placeholder="Capacity" required>
+            <button>Add Room</button>
+        </form>
+    </div>
+
+    <!-- AVAILABLE ROOMS -->
+    <div class="card">
+        <h2>Available Rooms</h2>
+
+        <ul>
+            {% for room in rooms %}
+            <li>
+                <b>{{ room.name }}</b> (Capacity: {{ room.capacity }})
+
+                <!-- DELETE ROOM -->
+                <form action="/delete-room" method="post" style="display:inline;">
+                    <input type="hidden" name="room_id" value="{{ room._id }}">
+                    <button class="delete-btn">Delete</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- BOOK ROOM -->
+    <div class="card">
+        <h2>Book Room</h2>
+
+        <form action="/book-room" method="post">
+
+            <select name="room" required>
+                <option value="">Select Room</option>
+                {% for room in rooms %}
+                <option value="{{ room.name }}">{{ room.name }}</option>
+                {% endfor %}
+            </select>
+
+            <input type="date" name="date" required>
+            <input type="time" name="time" required>
+
+            <button>Book</button>
+        </form>
+    </div>
+
+    <!-- BOOKINGS -->
+    <div class="card">
+        <h2>Your Bookings</h2>
+
+        <ul>
+            {% for b in bookings %}
+            <li>
+                {{ b.room }} | {{ b.date }} | {{ b.time }}
+
+                <!-- DELETE -->
+                <form action="/delete-booking" method="post" style="display:inline;">
+                    <input type="hidden" name="booking_id" value="{{ b._id }}">
+                    <button class="delete-btn">Delete</button>
+                </form>
+
+                <!-- EDIT -->
+                <a href="/edit/{{ b._id }}">
+                    <button class="edit-btn">Edit</button>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+</div>
+
+</body>
+</html>

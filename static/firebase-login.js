@@ -2,8 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import {
   getAuth,
   createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut
+  signInWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
@@ -18,9 +17,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-window.addEventListener("load", function () {
+window.onload = function () {
 
-  document.getElementById("login").addEventListener("click", function () {
+  document.getElementById("login").onclick = function () {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
 
@@ -28,13 +27,13 @@ window.addEventListener("load", function () {
       .then((userCredential) => {
         userCredential.user.getIdToken().then((token) => {
           document.cookie = "token=" + token + ";path=/";
-          window.location = "/";
+          window.location.href = "/dashboard";
         });
       })
-      .catch((error) => console.log(error.message));
-  });
+      .catch((error) => alert(error.message));
+  };
 
-  document.getElementById("signup").addEventListener("click", function () {
+  document.getElementById("signup").onclick = function () {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
 
@@ -42,17 +41,10 @@ window.addEventListener("load", function () {
       .then((userCredential) => {
         userCredential.user.getIdToken().then((token) => {
           document.cookie = "token=" + token + ";path=/";
-          window.location = "/";
+          window.location.href = "/dashboard";
         });
       })
-      .catch((error) => console.log(error.message));
-  });
+      .catch((error) => alert(error.message));
+  };
 
-  document.getElementById("logout").addEventListener("click", function () {
-    signOut(auth).then(() => {
-      document.cookie = "token=;path=/";
-      window.location = "/";
-    });
-  });
-
-});
+};
