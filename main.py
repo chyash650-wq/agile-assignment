@@ -1,5 +1,3 @@
-print("DELETE ROUTE LOADED")
-
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -11,14 +9,17 @@ from firebase_admin import credentials, auth
 from pymongo import MongoClient
 from bson import ObjectId
 
+# Firebase
 cred = credentials.Certificate("firebase-key.json")
 firebase_admin.initialize_app(cred)
 
 app = FastAPI()
 
+# Static + templates
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
+# MongoDB
 client = MongoClient("mongodb+srv://chyash650:Yash50@cluster0.fyopc3i.mongodb.net/?appName=Cluster0")
 db = client["A1-3192183"]
 
@@ -27,6 +28,7 @@ days_collection = db["days"]
 bookings_collection = db["bookings"]
 
 
+# 🔹 Get user
 def get_user(request: Request):
     token = request.cookies.get("token")
     if not token:
@@ -37,13 +39,15 @@ def get_user(request: Request):
         return None
 
 
+# 🔹 Login page
 @app.get("/", response_class=HTMLResponse)
 async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
 
+# 🔹 Dashboard (with filter)
 @app.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request):
+async def dashboard(request: Request, filter_room: str = None):
     user = get_user(request)
 
     if not user:
@@ -58,7 +62,16 @@ async def dashboard(request: Request):
 
     for b in user_bookings:
         day = days_collection.find_one({"_id": b["day_id"]})
+        if not day:
+            continue
+
         room = rooms_collection.find_one({"_id": day["room_id"]})
+        if not room:
+            continue
+
+        # 🔥 Filter (Task 7)
+        if filter_room and room["name"] != filter_room:
+            continue
 
         bookings.append({
             "room": room["name"],
@@ -75,9 +88,13 @@ async def dashboard(request: Request):
     })
 
 
+# 🔹 Add Room
 @app.post("/add-room")
 async def add_room(request: Request, name: str = Form(...), capacity: int = Form(...)):
     user = get_user(request)
+
+    if not user:
+        return RedirectResponse("/", status_code=303)
 
     rooms_collection.insert_one({
         "name": name,
@@ -88,11 +105,17 @@ async def add_room(request: Request, name: str = Form(...), capacity: int = Form
     return RedirectResponse("/dashboard", status_code=303)
 
 
+# 🔹 Book Room
 @app.post("/book-room")
 async def book_room(request: Request, room: str = Form(...), date: str = Form(...), time: str = Form(...)):
     user = get_user(request)
 
+    if not user:
+        return RedirectResponse("/", status_code=303)
+
     room_doc = rooms_collection.find_one({"name": room})
+    if not room_doc:
+        return RedirectResponse("/dashboard", status_code=303)
 
     day_doc = days_collection.find_one({
         "room_id": room_doc["_id"],
@@ -116,51 +139,77 @@ async def book_room(request: Request, room: str = Form(...), date: str = Form(..
     return RedirectResponse("/dashboard", status_code=303)
 
 
+# 🔹 Delete Booking
 @app.post("/delete-booking")
 async def delete_booking(booking_id: str = Form(...)):
-    bookings_collection.delete_one({"_id": ObjectId(booking_id)})
+    try:
+        bookings_collection.delete_one({"_id": ObjectId(booking_id)})
+    except:
+        pass
     return RedirectResponse("/dashboard", status_code=303)
 
 
-# 🔥 FIXED DELETE ROOM
+# 🔥 DELETE ROOM (FULL SAFE VERSION)
 @app.post("/delete-room")
 async def delete_room(request: Request, room_id: str = Form(...)):
     user = get_user(request)
 
-    room = rooms_collection.find_one({"_id": ObjectId(room_id)})
+    if not user:
+        return RedirectResponse("/", status_code=303)
 
-    # Only owner
-    if room["owner"] != user.get("email"):
+    try:
+        room = rooms_collection.find_one({"_id": ObjectId(room_id)})
+    except:
         return RedirectResponse("/dashboard", status_code=303)
 
-    # Check ALL bookings
+    # ❌ Room not found
+    if not room:
+        return RedirectResponse("/dashboard", status_code=303)
+
+    # ❌ Only owner
+    if room.get("owner") != user.get("email"):
+        return RedirectResponse("/dashboard", status_code=303)
+
+    # ❌ Check bookings exist
     days = days_collection.find({"room_id": room["_id"]})
 
     for d in days:
         if bookings_collection.find_one({"day_id": d["_id"]}):
             return RedirectResponse("/dashboard", status_code=303)
 
-    # Delete
+    # ✅ Delete room
     rooms_collection.delete_one({"_id": ObjectId(room_id)})
 
     return RedirectResponse("/dashboard", status_code=303)
 
 
+# 🔹 Edit Page
 @app.get("/edit/{booking_id}", response_class=HTMLResponse)
 async def edit_page(request: Request, booking_id: str):
-    booking = bookings_collection.find_one({"_id": ObjectId(booking_id)})
+    try:
+        booking = bookings_collection.find_one({"_id": ObjectId(booking_id)})
+    except:
+        return RedirectResponse("/dashboard", status_code=303)
+
+    if not booking:
+        return RedirectResponse("/dashboard", status_code=303)
 
     return templates.TemplateResponse("edit.html", {
         "request": request,
         "booking_id": booking_id,
-        "time": booking["time"]
+        "time": booking.get("time", "")
     })
 
 
+# 🔹 Update Booking
 @app.post("/update-booking")
 async def update_booking(booking_id: str = Form(...), time: str = Form(...)):
-    bookings_collection.update_one(
-        {"_id": ObjectId(booking_id)},
-        {"$set": {"time": time}}
-    )
+    try:
+        bookings_collection.update_one(
+            {"_id": ObjectId(booking_id)},
+            {"$set": {"time": time}}
+        )
+    except:
+        pass
+
     return RedirectResponse("/dashboard", status_code=303)

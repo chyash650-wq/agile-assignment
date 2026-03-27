@@ -16,9 +16,9 @@
 <h2>Add Room</h2>
 
 <form action="/add-room" method="post">
-    <input type="text" name="name" placeholder="Room Name" required>
-    <input type="number" name="capacity" placeholder="Capacity" required>
-    <button type="submit">Add Room</button>
+<input type="text" name="name" placeholder="Room Name" required>
+<input type="number" name="capacity" placeholder="Capacity" required>
+<button type="submit">Add Room</button>
 </form>
 
 </div>
@@ -30,15 +30,19 @@
 <ul>
 {% for room in rooms %}
 <li>
-    <b>{{ room.name }}</b> (Capacity: {{ room.capacity }})
+<span>
+<b>{{ room.name }}</b> (Capacity: {{ room.capacity }})
+</span>
 
-    <!-- ✅ CORRECT DELETE BUTTON -->
-    {% if room.owner == user.email %}
-    <form action="/delete-room" method="post" style="display:inline;">
-        <input type="hidden" name="room_id" value="{{ room._id }}">
-        <button type="submit" class="delete-btn">Delete</button>
-    </form>
-    {% endif %}
+<div>
+<form action="/delete-room" method="post" style="display:inline;">
+<input type="hidden" name="room_id" value="{{ room._id }}">
+<button type="submit" class="delete-btn"
+onclick="return confirm('Delete this room?')">
+Delete
+</button>
+</form>
+</div>
 
 </li>
 {% endfor %}
@@ -68,6 +72,25 @@
 
 </div>
 
+<!-- FILTER BOOKINGS -->
+<div class="card">
+<h2>Filter Bookings by Room</h2>
+
+<form method="get" action="/dashboard">
+
+<select name="filter_room">
+<option value="">All Rooms</option>
+{% for room in rooms %}
+<option value="{{ room.name }}">{{ room.name }}</option>
+{% endfor %}
+</select>
+
+<button type="submit">Filter</button>
+
+</form>
+
+</div>
+
 <!-- BOOKINGS -->
 <div class="card">
 <h2>Your Bookings</h2>
@@ -75,16 +98,25 @@
 <ul>
 {% for b in bookings %}
 <li>
+<span>
 {{ b.room }} | {{ b.date }} | {{ b.time }}
+</span>
+
+<div>
 
 <form action="/delete-booking" method="post" style="display:inline;">
 <input type="hidden" name="booking_id" value="{{ b._id }}">
-<button type="submit" class="delete-btn">Delete</button>
+<button type="submit" class="delete-btn"
+onclick="return confirm('Delete this booking?')">
+Delete
+</button>
 </form>
 
 <a href="/edit/{{ b._id }}">
 <button type="button" class="edit-btn">Edit</button>
 </a>
+
+</div>
 
 </li>
 {% endfor %}
