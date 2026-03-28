@@ -529,3 +529,78 @@ li:hover { border-color: var(--border-hover); }
   margin-bottom: 0.75rem;
   display: inline-block;
 }
+
+/* ── Clickable room name ── */
+.li-link {
+  color: var(--text);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.li-link:hover {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── Room detail page ── */
+.room-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 1.5rem;
+}
+
+.room-detail-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-lg);
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.room-detail-name {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.03em;
+  margin-bottom: 2px;
+}
+
+.room-detail-cap {
+  font-size: 0.8rem;
+  color: var(--text2);
+  font-family: var(--mono);
+}
+
+/* ── Day group in room detail ── */
+.day-group {
+  margin-bottom: 1rem;
+}
+
+.day-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text3);
+  font-family: var(--mono);
+  padding: 0 2px;
+  margin-bottom: 6px;
+}
+
+/* ── Back link ── */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--text2);
+  text-decoration: none;
+  margin-bottom: 1.5rem;
+  transition: color 0.15s;
+}
+.back-link:hover { color: var(--text); }
