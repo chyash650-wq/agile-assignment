@@ -17,34 +17,27 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-window.onload = function () {
+function setToken(userCredential) {
+  return userCredential.user.getIdToken().then((token) => {
+    document.cookie = "token=" + token + ";path=/";
+    window.location.href = "/dashboard";
+  });
+}
 
+window.onload = function () {
   document.getElementById("login").onclick = function () {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
-
     signInWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        userCredential.user.getIdToken().then((token) => {
-          document.cookie = "token=" + token + ";path=/";
-          window.location.href = "/dashboard";
-        });
-      })
-      .catch((error) => alert(error.message));
+      .then(setToken)
+      .catch((error) => window.showError(error.message));
   };
 
   document.getElementById("signup").onclick = function () {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
-
     createUserWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        userCredential.user.getIdToken().then((token) => {
-          document.cookie = "token=" + token + ";path=/";
-          window.location.href = "/dashboard";
-        });
-      })
-      .catch((error) => alert(error.message));
+      .then(setToken)
+      .catch((error) => window.showError(error.message));
   };
-
 };
