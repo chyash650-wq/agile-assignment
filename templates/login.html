@@ -1,26 +1,55 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Login</title>
-    <link rel="stylesheet" href="/static/styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Room Scheduler — Login</title>
+  <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
 
-<div class="container">
-<div class="card">
+<div class="login-wrap">
+  <div class="login-card">
 
-<h2>Login</h2>
+    <div class="login-logo">
+      <div class="login-logo-icon">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      </div>
+      <span class="login-title">Room Scheduler</span>
+    </div>
 
-<input id="email" placeholder="Email">
-<input id="password" type="password" placeholder="Password">
+    <p class="login-subtitle">Sign in to manage your bookings</p>
 
-<button id="login">Login</button>
-<button id="signup">Sign Up</button>
+    <div class="field">
+      <label for="email">Email address</label>
+      <input id="email" type="email" placeholder="you@example.com" autocomplete="email">
+    </div>
 
-</div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" type="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+
+    <div id="error-msg" class="error-msg"></div>
+
+    <div class="login-btns">
+      <button id="login" type="button" class="btn-primary">Sign in</button>
+      <button id="signup" type="button" class="btn-ghost">Create account</button>
+    </div>
+
+  </div>
 </div>
 
 <script type="module" src="/static/firebase-login.js"></script>
+
+<script>
+  function showError(msg) {
+    const el = document.getElementById('error-msg');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+  window.showError = showError;
+</script>
 
 </body>
 </html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+<div class="container">
+<h2>Book Room</h2>
+
+<form action="/book-room" method="post">
+
+<select name="room">
+{% for room in rooms %}
+<option value="{{ room.name }}">{{ room.name }}</option>
+{% endfor %}
+</select>
+
+<input type="date" name="date">
+<input type="time" name="time">
+
+<button>Book</button>
+
+</form>
+
+<a href="/dashboard">Back</a>
+
+</div>
+
+</body>
+</html>

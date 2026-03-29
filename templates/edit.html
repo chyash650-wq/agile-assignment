@@ -1,21 +1,39 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Booking — Room Scheduler</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
 <body>
 
-<h1>Edit Booking</h1>
+<div class="edit-wrap">
+  <div class="edit-card">
 
-<form action="/update-booking" method="post">
+    <div class="login-logo" style="margin-bottom:1.5rem">
+      <div class="login-logo-icon">
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#4f8ef7;fill:none;stroke-width:2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </div>
+      <span class="login-title">Edit booking</span>
+    </div>
 
-    <input type="hidden" name="booking_id" value="{{ booking_id }}">
+    <form action="/update-booking" method="post">
+      <input type="hidden" name="booking_id" value="{{ booking_id }}">
 
-    <label>Time:</label>
-    <input type="time" name="time" value="{{ time }}" required>
+      <div class="field" style="margin-bottom:0.9rem">
+        <label>New time</label>
+        <input type="time" name="time" value="{{ time }}" required style="min-width:unset;width:100%">
+      </div>
 
-    <br><br>
+      <div class="edit-actions">
+        <button type="submit" class="btn-primary">Save changes</button>
+        <a href="/dashboard" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
 
-    <button type="submit">Update</button>
-
-</form>
+  </div>
+</div>
 
 </body>
 </html>

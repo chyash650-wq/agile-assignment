@@ -1,130 +1,158 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Dashboard</title>
-    <link rel="stylesheet" href="/static/styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Room Scheduler</title>
+  <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
 
 <div class="container">
 
-<h1>Room Scheduler Dashboard</h1>
-<p>Logged in as: {{ user.email }}</p>
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      </div>
+      <span class="brand-name">Room Scheduler</span>
+    </div>
+    <div class="topbar-user">
+      <div class="avatar">{{ user.email[:2].upper() }}</div>
+      <span>{{ user.email }}</span>
+    </div>
+  </div>
 
-<!-- ADD ROOM -->
-<div class="card">
-<h2>Add Room</h2>
+  <!-- Error messages for Task 12 guard -->
+  {% if error == 'not_owner' %}
+  <div class="alert-error">You can only delete rooms you created.</div>
+  {% elif error == 'has_bookings' %}
+  <div class="alert-error">This room has active bookings and cannot be deleted.</div>
+  {% endif %}
 
-<form action="/add-room" method="post">
-<input type="text" name="name" placeholder="Room Name" required>
-<input type="number" name="capacity" placeholder="Capacity" required>
-<button type="submit">Add Room</button>
-</form>
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Total rooms</div>
+      <div class="stat-value">{{ rooms | length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Your bookings</div>
+      <div class="stat-value">{{ bookings | length }}</div>
+    </div>
+  </div>
+
+  <!-- Add Room -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Add room</span>
+    </div>
+    <form action="/add-room" method="post">
+      <input type="text" name="name" placeholder="Room name" required>
+      <button type="submit">Add room</button>
+    </form>
+  </div>
+
+  <!-- Available Rooms -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Available rooms</span>
+      <span class="badge">{{ rooms | length }} room{{ 's' if rooms | length != 1 else '' }}</span>
+    </div>
+    {% if rooms %}
+    <ul>
+      {% for room in rooms %}
+      <li>
+        <div class="li-main">
+          <a href="/room/{{ room._id }}" class="li-name li-link">{{ room.name }}</a>
+        </div>
+        <div class="li-actions">
+          <form action="/delete-room" method="post" style="display:inline">
+            <input type="hidden" name="room_id" value="{{ room._id }}">
+            <button type="submit" class="delete-btn"
+              onclick="return confirm('Delete {{ room.name }}?')">Delete</button>
+          </form>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty">No rooms yet — add one above.</div>
+    {% endif %}
+  </div>
+
+  <!-- Book Room -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Book a room</span>
+    </div>
+    <form action="/book-room" method="post">
+      <select name="room" required>
+        <option value="">Select room</option>
+        {% for room in rooms %}
+        <option value="{{ room.name }}">{{ room.name }}</option>
+        {% endfor %}
+      </select>
+      <input type="date" name="date" required>
+      <input type="time" name="time" required>
+      <button type="submit">Book</button>
+    </form>
+  </div>
+
+  <!-- Bookings with filter -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Your bookings</span>
+    </div>
+    <form method="get" action="/dashboard" class="filter-form">
+      <select name="filter_room">
+        <option value="">All rooms</option>
+        {% for room in rooms %}
+        <option value="{{ room.name }}"
+          {% if filter_room == room.name %}selected{% endif %}>
+          {{ room.name }}
+        </option>
+        {% endfor %}
+      </select>
+      <input type="date" name="filter_day" value="{{ filter_day }}" title="Filter by day">
+      <button type="submit">Filter</button>
+      {% if filter_room or filter_day %}
+      <a href="/dashboard" class="btn btn-ghost" style="padding:7px 14px;font-size:0.82rem">Clear</a>
+      {% endif %}
+    </form>
+    <div style="height:0.75rem"></div>
+    {% if filter_day %}
+    <div class="filter-active-label">
+      Showing bookings for {{ filter_day }}{% if filter_room %} in {{ filter_room }}{% endif %}
+    </div>
+    {% endif %}
+    {% if bookings %}
+    <ul>
+      {% for b in bookings %}
+      <li>
+        <div class="li-main">
+          <span class="li-name">{{ b.room }}</span>
+          <span class="li-meta">{{ b.date }} &nbsp;·&nbsp; {{ b.time }}</span>
+        </div>
+        <div class="li-actions">
+          <a href="/edit/{{ b._id }}">
+            <button type="button" class="edit-btn">Edit</button>
+          </a>
+          <form action="/delete-booking" method="post" style="display:inline">
+            <input type="hidden" name="booking_id" value="{{ b._id }}">
+            <button type="submit" class="delete-btn"
+              onclick="return confirm('Delete this booking?')">Delete</button>
+          </form>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty">No bookings found.</div>
+    {% endif %}
+  </div>
 
 </div>
-
-<!-- AVAILABLE ROOMS -->
-<div class="card">
-<h2>Available Rooms</h2>
-
-<ul>
-{% for room in rooms %}
-<li>
-<span>
-<b>{{ room.name }}</b> (Capacity: {{ room.capacity }})
-</span>
-
-<div>
-<form action="/delete-room" method="post" style="display:inline;">
-<input type="hidden" name="room_id" value="{{ room._id }}">
-<button type="submit" class="delete-btn"
-onclick="return confirm('Delete this room?')">
-Delete
-</button>
-</form>
-</div>
-
-</li>
-{% endfor %}
-</ul>
-
-</div>
-
-<!-- BOOK ROOM -->
-<div class="card">
-<h2>Book Room</h2>
-
-<form action="/book-room" method="post">
-
-<select name="room" required>
-<option value="">Select Room</option>
-{% for room in rooms %}
-<option value="{{ room.name }}">{{ room.name }}</option>
-{% endfor %}
-</select>
-
-<input type="date" name="date" required>
-<input type="time" name="time" required>
-
-<button type="submit">Book</button>
-
-</form>
-
-</div>
-
-<!-- FILTER BOOKINGS -->
-<div class="card">
-<h2>Filter Bookings by Room</h2>
-
-<form method="get" action="/dashboard">
-
-<select name="filter_room">
-<option value="">All Rooms</option>
-{% for room in rooms %}
-<option value="{{ room.name }}">{{ room.name }}</option>
-{% endfor %}
-</select>
-
-<button type="submit">Filter</button>
-
-</form>
-
-</div>
-
-<!-- BOOKINGS -->
-<div class="card">
-<h2>Your Bookings</h2>
-
-<ul>
-{% for b in bookings %}
-<li>
-<span>
-{{ b.room }} | {{ b.date }} | {{ b.time }}
-</span>
-
-<div>
-
-<form action="/delete-booking" method="post" style="display:inline;">
-<input type="hidden" name="booking_id" value="{{ b._id }}">
-<button type="submit" class="delete-btn"
-onclick="return confirm('Delete this booking?')">
-Delete
-</button>
-</form>
-
-<a href="/edit/{{ b._id }}">
-<button type="button" class="edit-btn">Edit</button>
-</a>
-
-</div>
-
-</li>
-{% endfor %}
-</ul>
-
-</div>
-
-</div>
-
 </body>
 </html>

@@ -92,15 +92,14 @@ async def dashboard(
 
 # ── Add Room ──────────────────────────────────────────────────────────────────
 @app.post("/add-room")
-async def add_room(request: Request, name: str = Form(...), capacity: int = Form(...)):
+async def add_room(request: Request, name: str = Form(...)):
     user = get_user(request)
     if not user:
         return RedirectResponse("/", status_code=303)
 
     rooms_collection.insert_one({
-        "name":     name,
-        "capacity": capacity,
-        "owner":    user.get("email")
+        "name":  name,
+        "owner": user.get("email")
     })
     return RedirectResponse("/dashboard", status_code=303)
 
@@ -216,6 +215,8 @@ async def update_booking(booking_id: str = Form(...), time: str = Form(...)):
 # ── Room Detail Page ──────────────────────────────────────────────────────────
 @app.get("/room/{room_id}", response_class=HTMLResponse)
 async def room_detail(request: Request, room_id: str):
+    from datetime import datetime, timedelta
+
     user = get_user(request)
     if not user:
         return RedirectResponse("/", status_code=303)
@@ -228,7 +229,7 @@ async def room_detail(request: Request, room_id: str):
     if not room:
         return RedirectResponse("/dashboard", status_code=303)
 
-    # Gather ALL bookings for this room across all users, grouped by date
+    # All bookings for this room grouped by date
     days = list(days_collection.find({"room_id": room["_id"]}))
     bookings_by_day = {}
 
@@ -244,12 +245,47 @@ async def room_detail(request: Request, room_id: str):
                 for b in sorted(day_bookings, key=lambda x: x["time"])
             ]
 
-    # Sort days chronologically
     sorted_days = sorted(bookings_by_day.items())
+
+    # Occupancy for next 5 days (09:00-18:00 = 540 minutes)
+    WORK_START = 9 * 60
+    WORK_END   = 18 * 60
+    WORK_MINS  = WORK_END - WORK_START
+
+    today = datetime.now().date()
+    occupancy = []
+
+    for i in range(5):
+        target_date = today + timedelta(days=i)
+        date_str    = target_date.strftime("%Y-%m-%d")
+        bookings    = bookings_by_day.get(date_str, [])
+
+        booked_mins = 0
+        for b in bookings:
+            try:
+                h, m          = map(int, b["time"].split(":"))
+                start         = h * 60 + m
+                end           = start + 60
+                clamped_start = max(start, WORK_START)
+                clamped_end   = min(end,   WORK_END)
+                if clamped_end > clamped_start:
+                    booked_mins += clamped_end - clamped_start
+            except:
+                pass
+
+        pct = min(round((booked_mins / WORK_MINS) * 100), 100)
+
+        occupancy.append({
+            "date":   date_str,
+            "label":  target_date.strftime("%a %d %b"),
+            "pct":    pct,
+            "booked": len(bookings)
+        })
 
     return templates.TemplateResponse("room_detail.html", {
         "request":     request,
         "user":        user,
         "room":        room,
-        "sorted_days": sorted_days
+        "sorted_days": sorted_days,
+        "occupancy":   occupancy
     })
