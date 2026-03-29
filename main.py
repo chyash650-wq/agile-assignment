@@ -39,6 +39,18 @@ def get_user(request: Request):
         return None
 
 
+# ── Check if a time clashes with existing bookings on a day ──────────────────
+def has_clash(day_id, time: str, exclude_booking_id=None):
+    """Returns True if the given time clashes with any existing booking on that day."""
+    query = {"day_id": day_id}
+    for b in bookings_collection.find(query):
+        if exclude_booking_id and b["_id"] == exclude_booking_id:
+            continue
+        if b["time"] == time:
+            return True
+    return False
+
+
 # ── Login page ────────────────────────────────────────────────────────────────
 @app.get("/", response_class=HTMLResponse)
 async def login_page(request: Request):
@@ -80,22 +92,28 @@ async def dashboard(
         })
 
     return templates.TemplateResponse("dashboard.html", {
-        "request":    request,
-        "user":       user,
-        "rooms":      rooms,
-        "bookings":   bookings,
-        "error":      error,
+        "request":     request,
+        "user":        user,
+        "rooms":       rooms,
+        "bookings":    bookings,
+        "error":       error,
         "filter_room": filter_room or "",
         "filter_day":  filter_day  or ""
     })
 
 
 # ── Add Room ──────────────────────────────────────────────────────────────────
+# BUG FIX 1: Check for duplicate room name before inserting
 @app.post("/add-room")
 async def add_room(request: Request, name: str = Form(...)):
     user = get_user(request)
     if not user:
         return RedirectResponse("/", status_code=303)
+
+    # Prevent duplicate room names (case-insensitive)
+    existing = rooms_collection.find_one({"name": {"$regex": f"^{name}$", "$options": "i"}})
+    if existing:
+        return RedirectResponse("/dashboard?error=duplicate_room", status_code=303)
 
     rooms_collection.insert_one({
         "name":  name,
@@ -105,12 +123,13 @@ async def add_room(request: Request, name: str = Form(...)):
 
 
 # ── Book Room ─────────────────────────────────────────────────────────────────
+# BUG FIX 4: Check for clash before creating booking
 @app.post("/book-room")
 async def book_room(
     request: Request,
-    room: str  = Form(...),
-    date: str  = Form(...),
-    time: str  = Form(...)
+    room: str = Form(...),
+    date: str = Form(...),
+    time: str = Form(...)
 ):
     user = get_user(request)
     if not user:
@@ -129,6 +148,10 @@ async def book_room(
             "date":    date
         }).inserted_id
 
+    # Clash check: is this time already booked for this room+day?
+    if has_clash(day_id, time):
+        return RedirectResponse("/dashboard?error=clash", status_code=303)
+
     bookings_collection.insert_one({
         "day_id": day_id,
         "time":   time,
@@ -138,12 +161,19 @@ async def book_room(
 
 
 # ── Delete Booking ────────────────────────────────────────────────────────────
+# BUG FIX 2: Verify the booking belongs to the current user before deleting
 @app.post("/delete-booking")
 async def delete_booking(request: Request, booking_id: str = Form(...)):
     user = get_user(request)
     if not user:
         return RedirectResponse("/", status_code=303)
     try:
+        booking = bookings_collection.find_one({"_id": ObjectId(booking_id)})
+        if not booking:
+            return RedirectResponse("/dashboard", status_code=303)
+        # Only delete if this booking belongs to the current user
+        if booking.get("user") != user.get("email"):
+            return RedirectResponse("/dashboard?error=not_your_booking", status_code=303)
         bookings_collection.delete_one({"_id": ObjectId(booking_id)})
     except:
         pass
@@ -179,6 +209,7 @@ async def delete_room(request: Request, room_id: str = Form(...)):
 
 
 # ── Edit Booking Page ─────────────────────────────────────────────────────────
+# BUG FIX 3: Verify the booking belongs to the current user before showing edit page
 @app.get("/edit/{booking_id}", response_class=HTMLResponse)
 async def edit_page(request: Request, booking_id: str):
     user = get_user(request)
@@ -192,6 +223,10 @@ async def edit_page(request: Request, booking_id: str):
     if not booking:
         return RedirectResponse("/dashboard", status_code=303)
 
+    # Only the owner of this booking can edit it
+    if booking.get("user") != user.get("email"):
+        return RedirectResponse("/dashboard?error=not_your_booking", status_code=303)
+
     return templates.TemplateResponse("edit.html", {
         "request":    request,
         "booking_id": booking_id,
@@ -200,15 +235,38 @@ async def edit_page(request: Request, booking_id: str):
 
 
 # ── Update Booking ────────────────────────────────────────────────────────────
+# BUG FIX 3+4: Verify ownership AND check for clash before updating
 @app.post("/update-booking")
-async def update_booking(booking_id: str = Form(...), time: str = Form(...)):
+async def update_booking(
+    request: Request,
+    booking_id: str = Form(...),
+    time:       str = Form(...)
+):
+    user = get_user(request)
+    if not user:
+        return RedirectResponse("/", status_code=303)
+
     try:
-        bookings_collection.update_one(
-            {"_id": ObjectId(booking_id)},
-            {"$set": {"time": time}}
-        )
+        booking_oid = ObjectId(booking_id)
+        booking     = bookings_collection.find_one({"_id": booking_oid})
     except:
-        pass
+        return RedirectResponse("/dashboard", status_code=303)
+
+    if not booking:
+        return RedirectResponse("/dashboard", status_code=303)
+
+    # Only the owner of this booking can update it
+    if booking.get("user") != user.get("email"):
+        return RedirectResponse("/dashboard?error=not_your_booking", status_code=303)
+
+    # Clash check: exclude current booking from clash detection
+    if has_clash(booking["day_id"], time, exclude_booking_id=booking_oid):
+        return RedirectResponse(f"/edit/{booking_id}?error=clash", status_code=303)
+
+    bookings_collection.update_one(
+        {"_id": booking_oid},
+        {"$set": {"time": time}}
+    )
     return RedirectResponse("/dashboard", status_code=303)
 
 
@@ -252,7 +310,7 @@ async def room_detail(request: Request, room_id: str):
     WORK_END   = 18 * 60
     WORK_MINS  = WORK_END - WORK_START
 
-    today = datetime.now().date()
+    today    = datetime.now().date()
     occupancy = []
 
     for i in range(5):
@@ -260,12 +318,14 @@ async def room_detail(request: Request, room_id: str):
         date_str    = target_date.strftime("%Y-%m-%d")
         bookings    = bookings_by_day.get(date_str, [])
 
-        booked_mins = 0
+        booked_starts = set()
+        booked_mins   = 0
         for b in bookings:
             try:
                 h, m          = map(int, b["time"].split(":"))
                 start         = h * 60 + m
                 end           = start + 60
+                booked_starts.add(start)
                 clamped_start = max(start, WORK_START)
                 clamped_end   = min(end,   WORK_END)
                 if clamped_end > clamped_start:
@@ -275,11 +335,23 @@ async def room_detail(request: Request, room_id: str):
 
         pct = min(round((booked_mins / WORK_MINS) * 100), 100)
 
+        earliest_free = None
+        for slot in range(WORK_START, WORK_END - 60 + 1, 60):
+            if slot not in booked_starts:
+                h = slot // 60
+                m = slot % 60
+                earliest_free = f"{h:02d}:{m:02d}"
+                break
+
         occupancy.append({
-            "date":   date_str,
-            "label":  target_date.strftime("%a %d %b"),
-            "pct":    pct,
-            "booked": len(bookings)
+            "date":          date_str,
+            "label":         target_date.strftime("%a %d %b"),
+            "short":         target_date.strftime("%a"),
+            "day_num":       target_date.strftime("%d"),
+            "pct":           pct,
+            "booked":        len(bookings),
+            "earliest_free": earliest_free,
+            "booked_slots":  list(booked_starts)
         })
 
     return templates.TemplateResponse("room_detail.html", {

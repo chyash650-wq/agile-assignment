@@ -29,6 +29,12 @@
   <div class="alert-error">You can only delete rooms you created.</div>
   {% elif error == 'has_bookings' %}
   <div class="alert-error">This room has active bookings and cannot be deleted.</div>
+  {% elif error == 'duplicate_room' %}
+  <div class="alert-error">A room with that name already exists.</div>
+  {% elif error == 'clash' %}
+  <div class="alert-error">That time slot is already booked for this room and date.</div>
+  {% elif error == 'not_your_booking' %}
+  <div class="alert-error">You can only edit or delete your own bookings.</div>
   {% endif %}
 
   <!-- Stats -->

@@ -18,6 +18,12 @@
       <span class="login-title">Edit booking</span>
     </div>
 
+    {% if request.query_params.get('error') == 'clash' %}
+    <div class="alert-error" style="margin-bottom:1rem">
+      That time slot is already booked — please choose a different time.
+    </div>
+    {% endif %}
+
     <form action="/update-booking" method="post">
       <input type="hidden" name="booking_id" value="{{ booking_id }}">
 

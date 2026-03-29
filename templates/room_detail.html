@@ -40,38 +40,85 @@
     </div>
   </div>
 
+  <!-- Calendar widget -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Booking calendar — next 5 days</span>
+      <span class="badge">09:00 – 18:00</span>
+    </div>
+
+    <div class="cal-wrap">
+      <!-- Time axis -->
+      <div class="cal-time-col">
+        <div class="cal-corner"></div>
+        {% for h in range(9, 18) %}
+        <div class="cal-time-slot">{{ "%02d:00" % h }}</div>
+        {% endfor %}
+      </div>
+
+      <!-- Day columns -->
+      {% for day in occupancy %}
+      <div class="cal-day-col">
+        <div class="cal-day-header">
+          <span class="cal-day-name">{{ day.short }}</span>
+          <span class="cal-day-num">{{ day.day_num }}</span>
+        </div>
+        {% for h in range(9, 18) %}
+        {% set slot_min = h * 60 %}
+        <div class="cal-cell {% if slot_min in day.booked_slots %}cal-booked{% else %}cal-free{% endif %}">
+          {% if slot_min in day.booked_slots %}
+          <span class="cal-booked-label">Booked</span>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Legend -->
+    <div class="cal-legend">
+      <span class="cal-legend-item"><span class="cal-legend-dot cal-legend-booked"></span>Booked</span>
+      <span class="cal-legend-item"><span class="cal-legend-dot cal-legend-free"></span>Free</span>
+    </div>
+  </div>
+
   <!-- Occupancy next 5 days -->
   <div class="card">
     <div class="card-header">
       <span class="card-title">Occupancy — next 5 days</span>
-      <span class="badge">09:00 – 18:00</span>
     </div>
     <div class="occupancy-grid">
       {% for day in occupancy %}
-      <div class="occ-day">
-        <div class="occ-label">{{ day.label }}</div>
-        <div class="occ-bar-wrap">
-          <div class="occ-bar
-            {% if day.pct >= 80 %}occ-high
-            {% elif day.pct >= 40 %}occ-mid
-            {% else %}occ-low{% endif %}"
-            style="width: {{ day.pct }}%">
-          </div>
+      <div class="occ-row">
+        <div class="occ-top">
+          <div class="occ-label">{{ day.label }}</div>
+          <div class="occ-pct">{{ day.pct }}%</div>
         </div>
-        <div class="occ-pct">{{ day.pct }}%</div>
-        <div class="occ-bookings">{{ day.booked }} booking{{ 's' if day.booked != 1 else '' }}</div>
+        <div class="occ-bar-wrap">
+          <div class="occ-bar {% if day.pct >= 80 %}occ-high{% elif day.pct >= 40 %}occ-mid{% else %}occ-low{% endif %}" style="width: {{ day.pct }}%"></div>
+        </div>
+        <div class="occ-bottom">
+          <span class="occ-bookings">{{ day.booked }} booking{{ 's' if day.booked != 1 else '' }}</span>
+          {% if day.earliest_free %}
+          <span class="occ-free">
+            <svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            First free: {{ day.earliest_free }}
+          </span>
+          {% else %}
+          <span class="occ-full">Fully booked</span>
+          {% endif %}
+        </div>
       </div>
       {% endfor %}
     </div>
   </div>
 
-  <!-- All bookings -->
+  <!-- All bookings list -->
   <div class="card">
     <div class="card-header">
       <span class="card-title">All bookings</span>
       <span class="badge">{{ sorted_days | length }} day{{ 's' if sorted_days | length != 1 else '' }}</span>
     </div>
-
     {% if sorted_days %}
       {% for date, bookings in sorted_days %}
       <div class="day-group">

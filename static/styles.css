@@ -609,20 +609,26 @@ li:hover { border-color: var(--border-hover); }
 .occupancy-grid {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
-.occ-day {
-  display: grid;
-  grid-template-columns: 90px 1fr 44px 90px;
+.occ-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.occ-top {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 10px;
 }
 
 .occ-label {
   font-size: 0.78rem;
   font-family: var(--mono);
   color: var(--text2);
+  font-weight: 500;
 }
 
 .occ-bar-wrap {
@@ -648,7 +654,12 @@ li:hover { border-color: var(--border-hover); }
   font-family: var(--mono);
   font-weight: 600;
   color: var(--text);
-  text-align: right;
+}
+
+.occ-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .occ-bookings {
@@ -657,9 +668,147 @@ li:hover { border-color: var(--border-hover); }
   font-family: var(--mono);
 }
 
-@media (max-width: 600px) {
-  .occ-day {
-    grid-template-columns: 70px 1fr 40px;
-  }
-  .occ-bookings { display: none; }
+.occ-free {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-family: var(--mono);
+  color: #3ecf8e;
 }
+
+.occ-full {
+  font-size: 0.72rem;
+  font-family: var(--mono);
+  color: var(--danger);
+}
+
+/* ── Calendar widget ── */
+.cal-wrap {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.cal-time-col {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.cal-corner {
+  height: 48px;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  background: var(--surface2);
+}
+
+.cal-time-slot {
+  height: 44px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  font-size: 0.68rem;
+  font-family: var(--mono);
+  color: var(--text3);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+  white-space: nowrap;
+}
+
+.cal-day-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cal-day-header {
+  height: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  background: var(--surface2);
+}
+
+.cal-day-col:last-child .cal-day-header,
+.cal-day-col:last-child .cal-cell {
+  border-right: none;
+}
+
+.cal-day-name {
+  font-size: 0.68rem;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: var(--mono);
+}
+
+.cal-day-num {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  font-family: var(--mono);
+}
+
+.cal-cell {
+  height: 44px;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.cal-free {
+  background: var(--surface);
+}
+
+.cal-free:hover {
+  background: var(--surface3);
+}
+
+.cal-booked {
+  background: rgba(79,142,247,0.15);
+  border-color: rgba(79,142,247,0.2);
+}
+
+.cal-booked-label {
+  font-size: 0.6rem;
+  font-family: var(--mono);
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cal-legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 0.25rem;
+}
+
+.cal-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--text2);
+}
+
+.cal-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.cal-legend-booked { background: rgba(79,142,247,0.4); }
+.cal-legend-free   { background: var(--surface3); border: 1px solid var(--border); }
