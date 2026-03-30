@@ -21,18 +21,23 @@
     <div class="topbar-user">
       <div class="avatar">{{ user.email[:2].upper() }}</div>
       <span>{{ user.email }}</span>
+      <a href="/logout" class="btn btn-ghost" style="padding:5px 12px;font-size:0.78rem;margin-left:6px">Logout</a>
     </div>
   </div>
 
-  <!-- Error messages for Task 12 guard -->
+  <!-- Error / info messages -->
   {% if error == 'not_owner' %}
   <div class="alert-error">You can only delete rooms you created.</div>
   {% elif error == 'has_bookings' %}
   <div class="alert-error">This room has active bookings and cannot be deleted.</div>
   {% elif error == 'duplicate_room' %}
   <div class="alert-error">A room with that name already exists.</div>
+  {% elif error == 'invalid_room' %}
+  <div class="alert-error">Room name cannot be empty.</div>
   {% elif error == 'clash' %}
   <div class="alert-error">That time slot is already booked for this room and date.</div>
+  {% elif error == 'invalid_booking' %}
+  <div class="alert-error">Please fill in all booking fields.</div>
   {% elif error == 'not_your_booking' %}
   <div class="alert-error">You can only edit or delete your own bookings.</div>
   {% endif %}
@@ -106,7 +111,7 @@
     </form>
   </div>
 
-  <!-- Bookings with filter -->
+  <!-- Bookings with filters -->
   <div class="card">
     <div class="card-header">
       <span class="card-title">Your bookings</span>
