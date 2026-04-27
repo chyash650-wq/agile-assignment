@@ -1,0 +1,15 @@
+﻿# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.pytest_tmp/
+test_tmp/
+
+# Environment
+.env
+venv/
+
+# OS
+desktop.ini
+*.lnk
